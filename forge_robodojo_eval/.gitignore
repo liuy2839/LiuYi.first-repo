@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+config.yaml
+dataflow.yaml
+results/
+videos/
+tmp/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
