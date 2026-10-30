@@ -1,0 +1,36 @@
+{
+  "_comment": "RoboDojo arx_x5 + action_type=ee：ReKep 控左臂末端位姿，右臂 hold 当前位姿。动作名与评测端 action_component_names() 逐字一致（16 维）。",
+  "action_space": "ee",
+  "action_names": [
+    "left_ee_pose.0",
+    "left_ee_pose.1",
+    "left_ee_pose.2",
+    "left_ee_pose.3",
+    "left_ee_pose.4",
+    "left_ee_pose.5",
+    "left_ee_pose.6",
+    "left_ee_joint_state.0",
+    "right_ee_pose.0",
+    "right_ee_pose.1",
+    "right_ee_pose.2",
+    "right_ee_pose.3",
+    "right_ee_pose.4",
+    "right_ee_pose.5",
+    "right_ee_pose.6",
+    "right_ee_joint_state.0"
+  ],
+  "pose_action_names": [
+    "left_ee_pose.0",
+    "left_ee_pose.1",
+    "left_ee_pose.2",
+    "left_ee_pose.3",
+    "left_ee_pose.4",
+    "left_ee_pose.5",
+    "left_ee_pose.6"
+  ],
+  "arm_action_names": [],
+  "gripper_action_name": "left_ee_joint_state.0",
+  "gripper_open_value": 0.0,
+  "gripper_close_value": 1.0,
+  "hold_uncontrolled": true
+}

@@ -55,6 +55,13 @@ forge_robodojo_eval/robodojo/       评测节点源码（与服务器部署布�
 │                                   （config.rekep/dataflow.rekep 为 ReKep 的对应版本）
 ├── tests/                          单测（serve 状态机 / autorun 回归 / 消息 round-trip）
 └── NEW_POLICY_GUIDE.md             新策略接入指南（详见下节）
+policy/                             策略侧 SDK：forge_policy（契约 + PolicyRuntime）
+├── src/forge_policy/               统一策略协议实现（帧聚合 / 命令分发 / 动作发送 / 状态上报）
+└── tests/                           协议与生命周期单测
+nodes/policies/rekep/               策略实现：ReKep（感知 / 规划 / 执行 / IK / 装配）
+├── rekep_alg/                       算法核心（关键点感知、约束规划+AST 沙箱、执行状态机）
+├── src/rekep_policy/                统一策略节点（core / profile / ik / assembly / main）
+└── tests/                           算法与节点单测
 skill-src/robodojo-bench/           PAOS Skill Bundle 源
 ├── skill.yaml                      manifest v2（g05 / rekep 两个 profile，startup_timeout_s: 900）
 ├── SKILL.md                        Agent 使用说明 + AgentTask verification 合同
@@ -66,6 +73,7 @@ scripts/                            构建 / 安装 / 探针与校验
 ├── build_nodes_skill_robodojo.sh   launcher 节点构建 + skill.yaml sha 回填 + 打包
 ├── build_skill_robodojo.sh         Skill 全量构建入口（节点制品 + bundle 打包）
 ├── deploy_robodojo_skill.sh        端到端部署：代码同步 → venv 准备 → 构建 → 安装
+├── deploy_rekep_policy.sh          策略侧部署：forge_policy/ReKep 同步 + 策略 venv + reference 运行时
 ├── install_robodojo_skill.sh       paos skill install + 节点制品放置
 ├── gateway_probe_robodojo.py       Tool API 探针（tools→describe→run，支持 --smoke）
 └── check_skill_yaml.py             Skill 树自洽校验（多 profile）

@@ -1,0 +1,15 @@
+[project]
+name = "forge-policy"
+version = "0.1.0"
+description = "Forge 统一策略节点传输协议与 Policy Runtime SDK"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dora-rs==0.4.1",
+    "numpy",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+# 有 forge_msgs 时走正式包；没有时 src/forge_policy/msgs.py 用字段级兼容回退
+forge = ["forge-msgs"]
