@@ -16,14 +16,16 @@ CORE_ROOT = PKG if (PKG / "_core" / "config.py").exists() else PKG.parent
 sys.path.insert(0, str(CORE_ROOT))
 sys.path.insert(0, str(HERE))
 
-sys.modules.setdefault("dora", type(sys)("dora"))
-_dora_stub = sys.modules["dora"]
-if not hasattr(_dora_stub, "Node"):
-    _dora_stub.Node = type("Node", (), {})
 import pyarrow_stub  # noqa: E402
 
-sys.modules.setdefault("pyarrow", pyarrow_stub)
-sys.modules.setdefault("forge_msgs", pyarrow_stub.Msgs())
+from _stubs import ensure_module  # noqa: E402
+
+# 真实依赖优先，缺失才用 tests 目录内的桩（避免把 sys.modules["pyarrow"] 预先注册成桩）
+_dora = ensure_module("dora", lambda: type(sys)("dora"))
+if not hasattr(_dora, "Node"):
+    _dora.Node = type("Node", (), {})
+ensure_module("pyarrow", lambda: pyarrow_stub, require=("RecordBatch", "array", "list_"))
+ensure_module("forge_msgs", pyarrow_stub.Msgs, require=("JointState", "Image", "PolicyCommand"))
 
 from _core.config import BaseBenchmarkConfig, fill_base  # noqa: E402
 

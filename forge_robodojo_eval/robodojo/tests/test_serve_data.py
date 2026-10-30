@@ -30,9 +30,12 @@ for p in (str(CORE_ROOT), str(PKG), str(HERE)):
 
 import pyarrow_stub  # noqa: E402  (tests 目录内的桩)
 
-sys.modules.setdefault("dora", type(sys)("dora"))
-sys.modules.setdefault("pyarrow", pyarrow_stub)
-sys.modules.setdefault("forge_msgs", pyarrow_stub.Msgs())
+from _stubs import ensure_module  # noqa: E402
+
+# 真实依赖优先，缺失才用桩
+ensure_module("dora", lambda: type(sys)("dora"))
+ensure_module("pyarrow", lambda: pyarrow_stub, require=("RecordBatch", "array", "list_"))
+ensure_module("forge_msgs", pyarrow_stub.Msgs, require=("JointState", "Image", "PolicyCommand"))
 
 from robodojo_config_stub import StubConfig  # noqa: E402
 from serve import CMD_RUN, CMD_STOP, ServeDataLoop  # noqa: E402
@@ -98,8 +101,15 @@ class _JointCommand:
 
 
 def text_of(value):
-    arr = pyarrow_stub.array
-    return value[0] if isinstance(value, arr) else value
+    """取出状态文本：兼容桩 array、真实 pyarrow Array 与 bytes。"""
+    if isinstance(value, pyarrow_stub.array):
+        return value[0]
+    if hasattr(value, "to_pylist"):  # 真实 pyarrow Array
+        items = value.to_pylist()
+        return items[0] if items else ""
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return bytes(value).decode("utf-8")
+    return value
 
 
 def drive_to_finish(loop, names=("j0", "j1")):
