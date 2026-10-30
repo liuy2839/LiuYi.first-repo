@@ -50,25 +50,22 @@ forge_robodojo_eval/robodojo/       评测节点源码（与服务器部署布�
 ├── main.py                         入口：cfg.serve 分流 autorun / serve
 ├── adapters/robodojo_adapter.py    RoboDojo 适配层：官方 eval env ↔ _core 协议
 │                                   （含 is_episode_end 副作用补偿与 reproducibility 口径）
+├── policy_node.py                  G05 策略节点（裸节点路径示例）
+├── config*.yaml / dataflow*.yaml   各策略的评测配置与裸 dora 拓扑
+│                                   （config.rekep/dataflow.rekep 为 ReKep 的对应版本）
 ├── tests/                          单测（serve 状态机 / autorun 回归 / 消息 round-trip）
 └── NEW_POLICY_GUIDE.md             新策略接入指南（详见下节）
-policies/rekep/                     关系关键点约束操作策略（独立于评测链路的策略实现）
-├── entrypoint.py                   节点入口：装载 rekep_policy.main（PyInstaller/源码通用）
-├── src/rekep_policy/               episode 时序编排（core）、算法装配（assembly）、
-│                                   动作空间与分量映射（profile）、IK 适配（StubIK/X5IK）
-├── rekep_alg/                      算法三模块：关键点感知（可选 DINOv2）/约束规划
-│                                   （模板或 VLM + AST 沙箱）/增量执行状态机
-├── rekep_profile.arx_x5_ee.json    ARX X5 双臂 ee 动作空间的机器人 profile
-└── tests/ build_node.sh            协议/算法单测与独立打包脚本
 skill-src/robodojo-bench/           PAOS Skill Bundle 源
 ├── skill.yaml                      manifest v2（g05 / rekep 两个 profile，startup_timeout_s: 900）
 ├── SKILL.md                        Agent 使用说明 + AgentTask verification 合同
 ├── launchers/                      薄壳启动器（bench_data / bench_tool / policy / rekep_policy）
 └── profiles/g05|rekep/             每 profile 的 dataflow / gateway / bench_config
                                    （g05：joint 动作；rekep：ee 动作 + scene_objects 感知）
-scripts/                            构建 / 安装 / 冒烟探针
+scripts/                            构建 / 安装 / 探针与校验
 ├── build_gateway_robodojo.sh       gateway onefile（官方 adapter-forge-gateway）
 ├── build_nodes_skill_robodojo.sh   launcher 节点构建 + skill.yaml sha 回填 + 打包
+├── build_skill_robodojo.sh         Skill 全量构建入口（节点制品 + bundle 打包）
+├── deploy_robodojo_skill.sh        端到端部署：代码同步 → venv 准备 → 构建 → 安装
 ├── install_robodojo_skill.sh       paos skill install + 节点制品放置
 ├── gateway_probe_robodojo.py       Tool API 探针（tools→describe→run，支持 --smoke）
 └── check_skill_yaml.py             Skill 树自洽校验（多 profile）
@@ -121,11 +118,15 @@ contract = PolicyContract(
 PolicyRuntime(MyPolicy(), contract).run()
 ```
 
-**仓库内完整示例**
+**路径 B：裸 policy 节点**——需要完全控制 rollout 节奏（如复刻官方 rollout 的
+动作 chunk 节奏）时直接写 dora 节点，自己处理观测聚合与动作发送，参照
+`forge_robodojo_eval/robodojo/policy_node.py`（G05 做法）。
+
+**仓库内示例**
 - G05：裸 policy 节点 `forge_robodojo_eval/robodojo/policy_node.py`，profile `profiles/g05/`
-- ReKep：forge_policy SDK 路径完整实现 `policies/rekep/`（`src/rekep_policy/` + `rekep_alg/`），
-  launcher `launchers/rekep_policy_node.py`，profile `profiles/rekep/`
-  （`action_type: ee` + `publish_scene_objects: true`）
+- ReKep（接入层）：launcher `launchers/rekep_policy_node.py` + profile `profiles/rekep/`
+  （`action_type: ee` + `publish_scene_objects: true`）；策略本体在外部仓库，
+  由 launcher 经 `BENCH_REKEP_PYTHON / BENCH_REKEP_SRC` 指向部署路径
 
 **加 profile 的步骤**
 1. 策略节点放进你的仓库/目录，准备对应 Python 环境（与 benchmark 侧**必须分环境**，
