@@ -41,7 +41,7 @@ contract = PolicyContract(
 PolicyRuntime(MyPolicy(), contract).run()
 ```
 
-参考实现：`packages/nodes/policies/rekep/src/rekep_policy/`（main.py 装配 +
+参考实现：`nodes/policies/rekep/src/rekep_policy/`（main.py 装配 +
 core.py 算法 + profile.py 动作名映射）。
 
 ## 路径 B：裸 policy 节点（需要完全控制 rollout 节奏时）
@@ -62,7 +62,7 @@ core.py 算法 + profile.py 动作名映射）。
 
 ## 加一个 profile 的步骤
 
-1. 策略代码放进 `packages/nodes/policies/<你的策略>/`（路径 A）或复用
+1. 策略代码放进 `nodes/policies/<你的策略>/`（路径 A）或复用
    `policy_node.py` 换 env（路径 B）。
 2. `skill-src/robodojo-bench/profiles/<你的profile>/`：拷贝 `g05/` 三件
    （dataflow.yaml / gateway.yaml 可原样；bench_config.yaml 改 policy_id）。

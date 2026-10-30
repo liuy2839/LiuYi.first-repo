@@ -1,0 +1,33 @@
+{
+  "_comment": "RoboDojo arx_x5 joint 模式的示例：ReKep 只控左臂+左夹爪，右臂分量 hold 当前位。动作名必须与评测端 action_component_names() 逐字一致（28 维观测命名中的动作子集）。",
+  "action_names": [
+    "left_arm_joint_state.0",
+    "left_arm_joint_state.1",
+    "left_arm_joint_state.2",
+    "left_arm_joint_state.3",
+    "left_arm_joint_state.4",
+    "left_arm_joint_state.5",
+    "left_ee_joint_state.0",
+    "right_arm_joint_state.0",
+    "right_arm_joint_state.1",
+    "right_arm_joint_state.2",
+    "right_arm_joint_state.3",
+    "right_arm_joint_state.4",
+    "right_arm_joint_state.5",
+    "right_ee_joint_state.0"
+  ],
+  "arm_action_names": [
+    "left_arm_joint_state.0",
+    "left_arm_joint_state.1",
+    "left_arm_joint_state.2",
+    "left_arm_joint_state.3",
+    "left_arm_joint_state.4",
+    "left_arm_joint_state.5"
+  ],
+  "gripper_action_name": "left_ee_joint_state.0",
+  "gripper_open_value": 0.0,
+  "gripper_close_value": 1.0,
+  "arm_lower": null,
+  "arm_upper": null,
+  "hold_uncontrolled": true
+}

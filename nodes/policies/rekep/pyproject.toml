@@ -1,0 +1,17 @@
+[project]
+name = "forge-policy-rekep"
+version = "0.1.0"
+description = "ReKep 策略节点：统一策略协议上的关系关键点约束操作策略"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dora-rs==0.4.1",
+    "numpy",
+    "pyarrow",
+    "mujoco",
+    "scipy",
+    "forge-policy",
+]
+
+[tool.uv.sources]
+forge-policy = { path = "../../../policy" }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- rekep_policy IK 场景：Panda(panda.xml 含 hand) + 在 hand body 注入 tool site。
+     基于 mujoco_menagerie franka_emika_panda。site 名与 rekep _ROBOT_PANDA
+     的 tool_site="tool" 一致，offset [0,0,0.10] 同参考实现。 -->
+<mujoco model="rekep panda ik">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+  <option integrator="implicitfast" impratio="10"/>
+
+  <default>
+    <default class="panda">
+      <material specular="0.5" shininess="0.25"/>
+      <joint armature="0.1" damping="1" axis="0 0 1" range="-2.8973 2.8973"/>
+      <general dyntype="none" biastype="affine" ctrlrange="-2.8973 2.8973" forcerange="-87 87"/>
+    </default>
+  </default>
+
+  <asset>
+    <include file="panda.xml"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 2"/>
+    <site name="tool_marker" pos="0 0 0" size="0.005"/>
+  </worldbody>
+</mujoco>

@@ -12,7 +12,7 @@ set -euo pipefail
 ZY="${ZY:-zy}"
 EVAL_DIR="/data0/liuyi/forge_robodojo_eval"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BENCH_DIR="${SRC_DIR}/packages/nodes/benchmarks"
+BENCH_DIR="${SRC_DIR}/forge_robodojo_eval/robodojo"
 
 # 1) 同步代码（_core 与 robodojo）
 rsync -a --delete \
@@ -20,10 +20,13 @@ rsync -a --delete \
     "${BENCH_DIR}/_core/" "${ZY}:${EVAL_DIR}/robodojo/_core/"
 rsync -a --delete \
     --exclude '__pycache__' --exclude '.pytest_cache' --exclude '*.pyc' \
-    --exclude '/bench_tool_venv' \
-    "${BENCH_DIR}/robodojo/" "${ZY}:${EVAL_DIR}/robodojo/"
+    --exclude '/bench_tool_venv' --exclude '/_core' \
+    "${BENCH_DIR}/" "${ZY}:${EVAL_DIR}/robodojo/"
 rsync -a "${SRC_DIR}/scripts/build_skill_robodojo.sh" "${ZY}:${EVAL_DIR}/"
 rsync -a "${SRC_DIR}/skill-src/" "${ZY}:${EVAL_DIR}/skill-src/"
+
+# 1b) 策略侧（forge_policy SDK + ReKep 节点 + venv + reference 运行时）
+bash "${SRC_DIR}/scripts/deploy_rekep_policy.sh"
 
 # 2) bench_tool venv（py3.12；幂等）
 ssh "${ZY}" bash -s <<'REMOTE'
