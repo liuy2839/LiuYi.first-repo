@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+forge_robodojo_eval_old/
+dist/
+results*/
+tmp/
+*.log
