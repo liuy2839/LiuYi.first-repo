@@ -23,7 +23,7 @@ bench_tool 节点  (py3.12 venv: forge-tool 1.0.0 + forge-msgs 1.3.0 + dora-rs 0
 bench_data 节点  (RoboDojo conda env, Isaac Sim)  ←—— serve 循环（serve.py）
    │  观测→动作 1:1 锁步（proprio_state / image/*  ↔  action）
    ▼
-policy 节点  (当前 G05 / XPolicyLab；新策略接入点，见下文)
+policy 节点  (G05 裸节点 / ReKep 等经 forge_policy SDK；新策略接入点，见下文)
 ```
 
 **双进程的原因**：forge-tool 要求 Python ≥3.12，而 RoboDojo/Isaac Sim 固定在
@@ -53,27 +53,34 @@ forge_robodojo_eval/robodojo/       评测节点源码（与服务器部署布�
 ├── policy_node.py                  G05 策略节点（裸节点路径示例）
 ├── config*.yaml / dataflow*.yaml   各策略的评测配置与裸 dora 拓扑
 │                                   （config.rekep/dataflow.rekep 为 ReKep 的对应版本）
-├── tests/                          单测（serve 状态机 / autorun 回归 / 消息 round-trip）
+├── tests/                          单测（serve 状态机 / autorun 回归 / 消息 round-trip；
+│                                   _stubs.py 优先真实依赖、缺失才回退桩）
 └── NEW_POLICY_GUIDE.md             新策略接入指南（详见下节）
-policy/                             策略侧 SDK：forge_policy（契约 + PolicyRuntime）
-├── src/forge_policy/               统一策略协议实现（帧聚合 / 命令分发 / 动作发送 / 状态上报）
-└── tests/                           协议与生命周期单测
-nodes/policies/rekep/               策略实现：ReKep（感知 / 规划 / 执行 / IK / 装配）
-├── rekep_alg/                       算法核心（关键点感知、约束规划+AST 沙箱、执行状态机）
-├── src/rekep_policy/                统一策略节点（core / profile / ik / assembly / main）
-└── tests/                           算法与节点单测
+policy/                             策略侧 SDK：forge_policy
+├── src/forge_policy/base.py        Policy 四方法抽象（reset_episode/set_instruction/step/shutdown）
+├── src/forge_policy/contract.py    策略线协议（PolicyContract：观测 topic、动作分量、哨兵）
+├── src/forge_policy/runtime.py     PolicyRuntime：帧聚合、命令分发、动作发送、状态上报
+└── tests/                          协议与生命周期单测
+nodes/policies/rekep/               策略实现：ReKep 关系关键点约束操作
+├── rekep_alg/                      算法核心（关键点感知 / 约束规划 + AST 沙箱 / 执行状态机）
+├── src/rekep_policy/               统一策略节点（episode 时序 core / 动作空间 profile /
+│                                   IK 适配 / 感知适配 / 算法装配 / 入口 main）
+├── rekep_profile.arx_x5_ee.json    ARX X5 机器人 profile（动作命名 + 关节限位）
+├── skill/                          PAOS manifest 与 robodojo-rekep dataflow
+└── tests/                          算法与节点单测
 skill-src/robodojo-bench/           PAOS Skill Bundle 源
 ├── skill.yaml                      manifest v2（g05 / rekep 两个 profile，startup_timeout_s: 900）
 ├── SKILL.md                        Agent 使用说明 + AgentTask verification 合同
 ├── launchers/                      薄壳启动器（bench_data / bench_tool / policy / rekep_policy）
 └── profiles/g05|rekep/             每 profile 的 dataflow / gateway / bench_config
                                    （g05：joint 动作；rekep：ee 动作 + scene_objects 感知）
-scripts/                            构建 / 安装 / 探针与校验
+scripts/                            构建 / 部署 / 探针与校验
 ├── build_gateway_robodojo.sh       gateway onefile（官方 adapter-forge-gateway）
 ├── build_nodes_skill_robodojo.sh   launcher 节点构建 + skill.yaml sha 回填 + 打包
 ├── build_skill_robodojo.sh         Skill 全量构建入口（节点制品 + bundle 打包）
-├── deploy_robodojo_skill.sh        端到端部署：代码同步 → venv 准备 → 构建 → 安装
-├── deploy_rekep_policy.sh          策略侧部署：forge_policy/ReKep 同步 + 策略 venv + reference 运行时
+├── deploy_robodojo_skill.sh        评测侧部署：代码同步 → venv 准备 → 构建 → 安装
+├── deploy_rekep_policy.sh          策略侧部署：forge_policy/ReKep 同步 + 策略 venv
+│                                   + reference 求解器运行时 + 单测冒烟
 ├── install_robodojo_skill.sh       paos skill install + 节点制品放置
 ├── gateway_probe_robodojo.py       Tool API 探针（tools→describe→run，支持 --smoke）
 └── check_skill_yaml.py             Skill 树自洽校验（多 profile）
@@ -82,19 +89,19 @@ scripts/                            构建 / 安装 / 探针与校验
 ## 部署与使用
 
 ```bash
-# 0) 前置：PAOS v1.1.1 conda env `paos`、RoboDojo conda env、策略 conda env、dora-cli 0.4.1、
+# 0) 前置：PAOS v1.1.1 conda env `paos`、RoboDojo conda env、dora-cli 0.4.1、
 #    bench_tool venv（forge-tool 1.0.0 / forge-msgs 1.3.0 / dora-rs 0.4.1 / pyinstaller）
 #    注意：所有路径以服务器实际部署为准（skill.yaml / profiles 内为示例机器路径，换机需替换）
 
-# 1) 构建
-bash scripts/build_gateway_robodojo.sh        # → dist/nodes/gateway-*.tar.gz
-bash scripts/build_nodes_skill_robodojo.sh    # → 3 个 launcher 节点 + Skill bundle
+# 1) 部署（评测侧 + 策略侧）
+bash scripts/deploy_robodojo_skill.sh       # 评测代码/构建/安装一条龙
+bash scripts/deploy_rekep_policy.sh         # ReKep 策略 venv + reference 求解器
 
-# 2) 安装（conda activate paos）
-bash scripts/install_robodojo_skill.sh
+# 2) 构建与安装（deploy 已包含；单独重跑时）
+bash scripts/build_skill_robodojo.sh        # 节点制品 + Skill bundle
 
 # 3) 启动（Isaac 冷启动需要数分钟；profile 已设 startup_timeout_s: 900）
-dora up && paos skill start robodojo-bench --profile g05
+dora up && paos skill start robodojo-bench --profile g05     # 或 --profile rekep
 
 # 4) 探针
 python scripts/gateway_probe_robodojo.py          # GET /tools + describe
@@ -105,7 +112,7 @@ python scripts/gateway_probe_robodojo.py --smoke  # 追加单集 run
 
 目标：把你训练好的策略（VLA / 行为策略 / 自定义 skill 算法）接入评测链路跑分。
 
-**路径 A：forge_policy SDK**
+**路径 A：forge_policy SDK**（策略代码在本仓库 `policy/` + `nodes/policies/`）
 实现 4 个方法 + 一份契约，dora 收发、帧聚合、命令分发、chunk_end 哨兵全部由
 `forge_policy.PolicyRuntime` 托管：
 
@@ -132,13 +139,14 @@ PolicyRuntime(MyPolicy(), contract).run()
 
 **仓库内示例**
 - G05：裸 policy 节点 `forge_robodojo_eval/robodojo/policy_node.py`，profile `profiles/g05/`
-- ReKep（接入层）：launcher `launchers/rekep_policy_node.py` + profile `profiles/rekep/`
-  （`action_type: ee` + `publish_scene_objects: true`）；策略本体在外部仓库，
-  由 launcher 经 `BENCH_REKEP_PYTHON / BENCH_REKEP_SRC` 指向部署路径
+- ReKep：`nodes/policies/rekep/`（SDK 路径完整实现），launcher
+  `launchers/rekep_policy_node.py` + profile `profiles/rekep/`
+  （`action_type: ee` + `publish_scene_objects: true`）
 
 **加 profile 的步骤**
-1. 策略节点放进你的仓库/目录，准备对应 Python 环境（与 benchmark 侧**必须分环境**，
-   websockets 版本冲突）；
+1. 策略代码放进 `nodes/policies/<你的策略>/`（路径 A，参照 rekep）或复用
+   `policy_node.py` 换 env（路径 B），准备对应 Python 环境（与 benchmark 侧
+   **必须分环境**，websockets 版本冲突）；
 2. 复制 `skill-src/robodojo-bench/profiles/g05/` 为 `profiles/<你的名字>/`，改
    `bench_config.yaml` 的 `policy_id / action_type`、`dataflow.yaml` 的 policy 节点 env；
 3. `skill.yaml` 的 `profiles` 下注册新 profile，替换 environment 中的 python/权重路径；
